@@ -35,26 +35,24 @@ ellipse_fitting_module = Extension('ellipse_fitter',
 
 setup(
     name='b2ac',
-    version='0.1.0',
-    description='Python and C implementations of an ellipse fitting algorithm in double and fixed point precision.',
+    version='0.1.1',
     author='Henrik Blidh',
     author_email='henrik.blidh@nedomkull.com',
+    description='Python and C implementations of an ellipse fitting algorithm in double and fixed point precision.',
+    long_description="TBD",
     license='MIT',
     url='https://github.com/hbldh/ellipse-fitting',
     packages=[
         'b2ac',
-        'b2ac.fit',
-        'b2ac.fit.eigenmethods',
-        'b2ac.fit.matrix',
+        'b2ac.eigenmethods',
+        'b2ac.matrix',
         'b2ac.ext',
     ],
+    install_requires=[line.strip() for line in open("requirements.txt")],
     package_data={'b2ac.ext': [
         'src/*',
         '*.cfg',
         '*.py']},
-    install_requires=[
-        'numpy>=1.6',
-    ],
     dependency_links=[],
     ext_modules=[
         ellipse_fitting_module,
