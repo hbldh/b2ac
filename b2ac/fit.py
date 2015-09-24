@@ -86,6 +86,8 @@ def fit_improved_B2AC_numpy(points):
 
     """
 
+    points, x_mean, y_mean = _remove_mean_values(points)
+
     x = points[:, 0]
     y = points[:, 1]
     D1 = np.vstack([x ** 2, x * y, y ** 2]).T
@@ -95,13 +97,21 @@ def fit_improved_B2AC_numpy(points):
     S3 = D2.T.dot(D2)
     T = -np.linalg.inv(S3).dot(S2.T)
     M = S1 + S2.dot(T)
-    M = np.array([M[2, :] / 2, -M[1, :], M[0, :] / 2])
-    # M = M.dot(np.inv(np.array([[0,0,2], [0,-1,0], [2,0,0]])))
+    #M = np.array([M[2, :] / 2, -M[1, :], M[0, :] / 2])
+    M = np.linalg.inv(np.array([[0,0,2], [0,-1,0], [2,0,0]])).dot(M)
     eigenvalues, eigenvectors = np.linalg.eig(M)
     cond = (4 * eigenvectors[:, 0] * eigenvectors[:, 2]) - (eigenvectors[:, 1] ** 2)
     I = np.where(cond > 0)[0]
-    a1 = eigenvectors[:, I[np.argmin(cond[I])]]
-    return _general_to_rotated(np.concatenate([a1, T.dot(a1)]))
+    ev_ind = I[np.argmin(cond[I])]
+    a1 = eigenvectors[:, ev_ind]
+    if DEBUG:
+        print("Numpy Version, Elliptical solution = {0}: {1}".format(eigenvalues[ev_ind], a1))
+
+    conic_coefficients = np.concatenate((a1, np.dot(T, a1)))
+    rotated_euclidian_coefficients = list(_general_to_rotated(conic_coefficients))
+    rotated_euclidian_coefficients[0] = (rotated_euclidian_coefficients[0][0] + x_mean,
+                                         rotated_euclidian_coefficients[0][1] + y_mean)
+    return rotated_euclidian_coefficients
 
 
 def fit_improved_B2AC_double(points):
@@ -143,7 +153,7 @@ def fit_improved_B2AC_double(points):
         raise ArithmeticError("No elliptical solution found.")
 
     if DEBUG:
-        print("Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
+        print("Double precision, Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
 
     conic_coefficients = np.concatenate((a, np.dot(T, a)))
     rotated_euclidian_coefficients = list(_general_to_rotated(conic_coefficients))
@@ -187,7 +197,7 @@ def fit_improved_B2AC_int(points):
         raise ArithmeticError("No elliptical solution found.")
 
     if DEBUG:
-        print("Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
+        print("Integer precision, Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
 
     conic_coefficients = np.concatenate((a, np.dot(T_no_det, a) // determinant_S3))
     rotated_euclidian_coefficients = list(_general_to_rotated_int(conic_coefficients, True))
@@ -423,13 +433,14 @@ def _calculate_M_and_T_double(points):
 
     """
     S = _calculate_scatter_matrix_py(points[:, 0], points[:, 1])
+    S1 = S[:3, :3]
     S3 = np.array([S[3, 3], S[3, 4], S[3, 5], S[4, 4], S[4, 5], S[5, 5]])
     S3_inv = mo.inverse_symmetric_3by3_double(S3).reshape((3, 3))
     S2 = S[:3, 3:]
     T = -np.dot(S3_inv, S2.T)
     M_term_2 = np.dot(S2, T)
-    M = S[:3, :3] + M_term_2
-    M[[0, 2], :] /= 2
+    M = S1 + M_term_2
+    M[[0, 2], :] = M[[2, 0], :] / 2
     M[1, :] = -M[1, :]
 
     return M, T
