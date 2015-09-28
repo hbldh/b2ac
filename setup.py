@@ -35,7 +35,7 @@ ellipse_fitting_module = Extension('ellipse_fitter',
 
 setup(
     name='b2ac',
-    version='0.1.1',
+    version='0.1.2',
     author='Henrik Blidh',
     author_email='henrik.blidh@nedomkull.com',
     description='Python and C implementations of an ellipse fitting algorithm in double and fixed point precision.',
