@@ -17,7 +17,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import numpy as np
-from geometry.matrix import inverse_symmetric_3by3_double, inverse_symmetric_3by3_int, add_symmetric_matrix
+from b2ac.matrix.matrix_ref import inverse_symmetric_3by3_double, inverse_symmetric_3by3_int, add_symmetric_matrix
 
 
 def fit_B2AC(points):
@@ -60,14 +60,16 @@ def fit_improved_B2AC(points):
     :rtype: :py:class:`numpy.ndarray`
 
     """
-
+    points = np.array(points, 'float')
     S = _calculate_scatter_matrix_py(points[:, 0], points[:, 1])
-    S3_inv = inverse_symmetric_3by3_double(S[3:, 3:]).reshape((3, 3))
+    S3 = S[3:, 3:]
+    S3 = np.array([S3[0, 0], S3[0, 1], S3[0, 2], S3[1, 1], S3[1, 2], S3[2, 2]])
+    S3_inv = inverse_symmetric_3by3_double(S3).reshape((3, 3))
     S2 = S[:3, 3:]
     T = -np.dot(S3_inv, S2.T)
     M = S[:3, :3] + np.dot(S2, T)
-    M[[0, 2], :] /= 2
-    M[1, :] = -M[1, :]
+    inv_mat = np.array([[0, 0, 0.5], [0, -1, 0], [0.5, 0, 0]], 'float')
+    M = inv_mat.dot(M)
 
     e_vals, e_vect = np.linalg.eig(M)
 
@@ -81,6 +83,8 @@ def fit_improved_B2AC(points):
         raise ArithmeticError("No elliptical solution found.")
 
     a = e_vect[:, elliptical_solution_index]
+    if a[0] < 0:
+        a = -a
     return np.concatenate((a, np.dot(T, a)))
 
 
@@ -110,9 +114,6 @@ def fit_improved_B2AC_int(points):
 
     e_vals, e_vect = np.linalg.eig(M)
 
-    #print("Eigenvalues: " + ", ".join([str(e) for e in e_vals]))
-    #print("Eigenvectors: " + ", ".join([str(e) for e in e_vect.flatten()]))
-
     try:
         elliptical_solution_index = np.where(((4 * e_vect[0, :] * e_vect[2, :]) - ((e_vect[1, :] ** 2))) > 0)[0][0]
     except:
@@ -122,34 +123,10 @@ def fit_improved_B2AC_int(points):
     return np.concatenate((a, np.dot(T_no_det, a) / det_S3))
 
 
-def conic_to_general(conic_coeffs):
-    """
-
-    :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
-    :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
-    :return: The general form for the ellipse. Returns tuple :math:`(x_c,\ y_c),\\ (a,\\ b),\\ \\theta`
-        that fulfills the equation
-
-        .. math::
-
-            \\frac{((x-x_c)\\cos(\\theta) + (y-y_c)\\sin(\\theta))^2}{a^2} +
-            \\frac{((x-x_c)\\sin(\\theta) - (y-y_c)\\sin(\\theta))^2}{b^2} = 1
-
-    :rtype: tuple
-
-    """
-    a, b, c, d, e, f = conic_coeffs
-    denom = 2 * ((b ** 2) - (a * c))
-    x = (c * d - b * e) / denom
-    y = (a * e - b * d) / denom
-    mu = 1 / ((a * (x ** 2)) + (2 * b * x * y) + (c * (y ** 2)) - f)
-
-    sqrt_expr = np.sqrt(((mu * a - mu * c) ** 2) + (4 * ((mu * b) ** 2)))
-    min_axis = 1 / np.sqrt((mu * a + mu * c + sqrt_expr) / 2)
-    maj_axis = 1 / np.sqrt((mu * a + mu * c - sqrt_expr) / 2)
-    angle = np.arctan2(-2 * b, c - a)
-
-    return (x, y), (maj_axis, min_axis), angle
+def _remove_mean_values(points):
+    x_mean = int(points[:, 0].mean())
+    y_mean = int(points[:, 1].mean())
+    return points - (x_mean, y_mean), x_mean, y_mean
 
 
 def _calculate_scatter_matrix_py(x, y):
@@ -163,14 +140,14 @@ def _calculate_scatter_matrix_py(x, y):
     :rtype: :py:class:`numpy.ndarray`
 
     """
-    D = np.ones((len(x), 6), 'int64')
+    D = np.ones((len(x), 6), dtype=x.dtype)
     D[:, 0] = x * x
     D[:, 1] = x * y
     D[:, 2] = y * y
     D[:, 3] = x
     D[:, 4] = y
 
-    return np.dot(D.T, D)
+    return D.T.dot(D)
 
 
 def _calculate_scatter_matrix_c(x, y):
@@ -185,8 +162,6 @@ def _calculate_scatter_matrix_c(x, y):
 
     """
     S = np.zeros((6, 6), 'int32')
-
-    # TODO: Remove mean of x and y coordinates to reduce word length.
 
     for i in xrange(len(x)):
         tmp_x2 = x[i] ** 2

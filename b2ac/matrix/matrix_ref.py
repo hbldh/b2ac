@@ -40,7 +40,7 @@ def inverse_symmetric_3by3_double(M):
     """
 
     determinant = 0
-    inverse = np.zeros((9,), dtype='int32')
+    inverse = np.zeros((9,), dtype='float')
 
     # First row of adjunct matrix
     inverse[0] = (M[3] * M[5] - (M[4] ** 2))  # Det #0

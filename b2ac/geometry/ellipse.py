@@ -24,25 +24,13 @@ from b2ac.geometry.shape import B2ACGeometricShape
 class B2ACEllipse(B2ACGeometricShape):
     """An class for representing elliptical shapes."""
 
-    def __init__(self, center=None, radii=None, rotation_angle=None, conic_coefficients=None):
+    def __init__(self, center, radii, rotation_angle):
         """Constructor for B2ACEllipse"""
 
         super(B2ACEllipse, self).__init__()
-
-        if center is not None and radii is not None and rotation_angle is not None:
-            self.center_point = np.array(center, 'float')
-            self.radii = np.array(radii, 'float')
-            self.rotation_angle = float(rotation_angle)
-            self.conic_coefficients = None
-        elif conic_coefficients is not None:
-            if len(conic_coefficients) != 6:
-                raise ValueError("Conic coefficients for Ellipse must be of length 6.")
-            self.center_point = None
-            self.radii = None
-            self.rotation_angle = None
-            self.conic_coefficients = np.array(conic_coefficients, 'float')
-        else:
-            raise ValueError('Either Center, Radii and Rotation angle OR conic coefficients must be set.')
+        self.center_point = np.array(center, 'float')
+        self.radii = np.array(radii, 'float')
+        self.rotation_angle = float(rotation_angle)
 
     def __str__(self):
         return "Ellipse: Center = ({0:.2f}, {1:.2f}), Radii = ({2:.2f}, {3:.2f}), Angle = {4:.4f}".format(
@@ -100,6 +88,5 @@ class B2ACEllipse(B2ACGeometricShape):
                      self.radii[0] * np.cos(t) * np.sin(self.rotation_angle) +
                      self.radii[1] * np.sin(t) * np.cos(self.rotation_angle))
         return out
-
 
 

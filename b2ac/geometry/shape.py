@@ -19,8 +19,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from b2ac.geometry.overlap.overlap_functions import overlap
-from b2ac.geometry.distance.distance_functions import distance
+#from b2ac.geometry.overlap.overlap_functions import overlap
+#from b2ac.geometry.distance.distance_functions import distance
 
 
 class B2ACGeometricShape(object):
@@ -66,7 +66,8 @@ class B2ACGeometricShape(object):
 
     def distance(self, other):
         """Calculates distance between B2ACGeometricShapes."""
-        return distance(self, other)
+        #return distance(self, other)
+        raise NotImplementedError()
 
     def overlap(self, other):
         """Returns ratio of overlap between this B2ACGeometricShape and another.
@@ -77,7 +78,8 @@ class B2ACGeometricShape(object):
         :rtype: float
 
         """
-        return overlap(self, other)
+        #return overlap(self, other)
+        raise NotImplementedError()
 
     def intersection_union_ratio(self, other, N=73):
         """Returns ratio between the two shapes intersection and their union.
