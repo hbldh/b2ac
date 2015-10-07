@@ -1,11 +1,16 @@
 # B2AC - Ellipse fitting in Python and C
 
+|  Branch       | Build status     |
+| :------------ | ---------------: |
+| `master`      | [![Build Status](https://travis-ci.org/hbldh/b2ac.svg?branch=master)](https://travis-ci.org/hbldh/b2ac) |
+| `develop`     | [![Build Status](https://travis-ci.org/hbldh/b2ac.svg?branch=develop)](https://travis-ci.org/hbldh/b2ac) |
+
 Python and C implementations of an ellipse fitting algorithm in double and fixed point precision. 
 
 The implementations here were never meant for production, but were written as an examination of how much
 speedup could be attained from implementing ellipse fitting methods in fixed point and at what precision cost.
 
-The ellipse fitting method in (2) (an improved version of the one in (1)) was implemented.
+The ellipse fitting method in \[2\] (an improved version of the one in (1)) was implemented.
 
 ### Solution strategy for double precision
 
