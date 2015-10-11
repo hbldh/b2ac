@@ -38,7 +38,6 @@ class TestReferenceImplementation(object):
         self.e = B2ACEllipse(center=(50.0, 75.0), radii=(50.0, 20.0), rotation_angle=0.707)
         self.points = np.array(self.e.polygonize(), 'int32')
 
-
     def test_fit_numpy_version(self):
         # Fails
         output = fit.fit_improved_B2AC_numpy(self.points.copy())

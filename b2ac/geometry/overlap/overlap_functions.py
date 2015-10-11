@@ -26,6 +26,16 @@ N_POLYPOINTS = 73
 
 
 def overlap(this, other):
+    """Returns ratio of overlap between two B2ACGeometricShapes.
+
+    :param this: The first B2ACGeometricShape subclass to check overlap with.
+    :type this: :py:class:`b2ac.geometry.shape.B2ACGeometricShape`
+    :param other: The second B2ACGeometricShape subclass to check overlap with.
+    :type other: :py:class:`b2ac.geometry.shape.B2ACGeometricShape`
+    :return: Value in [0, 1] describing how much of ``this`` that is enclosed in ``other``.
+    :rtype: float
+
+    """
     if isinstance(this, B2ACPoint):
         if isinstance(other, B2ACPoint):
             # Point to point overlap is really non-defined. Using parent class
@@ -49,6 +59,50 @@ def overlap(this, other):
             return overlap_polygon_ellipse(this, other)
         elif isinstance(other, B2ACPolygon):
             return overlap_polygon_polygon(this, other)
+
+
+def intersection_union_ratio(this, other):
+    """Returns ratio between the two shapes intersection and their union.
+
+    :param other: The B2ACGeometricShape subclass to check intersection and union ratio with.
+    :type other:
+    :param N: The number of points to generate in case of ellipse to polygon conversion is needed.
+     Default is 73 (one vertex every 5 degrees).
+    :type N: int
+    :return: Value in [0, 1].
+    :rtype: float
+
+    """
+    if isinstance(this, B2ACPoint) or isinstance(other, B2ACPoint):
+        # Points cannot be used with this function.
+        return 0.
+    if isinstance(this, B2ACEllipse):
+        this_polygon = B2ACPolygon(this.polygonize())
+        if isinstance(other, B2ACEllipse):
+            other_polygon = B2ACPolygon(other.polygonize())
+        elif isinstance(other, B2ACPolygon):
+            other_polygon = other
+        else:
+            raise RuntimeError("Invalid comparison object.")
+    elif isinstance(this, B2ACPolygon):
+        this_polygon = this
+        if isinstance(other, B2ACEllipse):
+            other_polygon = B2ACPolygon(other.polygonize())
+        elif isinstance(other, B2ACPolygon):
+            other_polygon = other
+        else:
+            raise RuntimeError("Invalid comparison object.")
+    else:
+        # Cannot happen...
+        raise RuntimeError("Invalid comparison object.")
+
+    intersection_polygon = polygon_intersection(this_polygon, other_polygon)
+    if intersection_polygon is None:
+        # No intersection. Return 0.
+        return 0.
+
+    union_polygon = polygon_union(this_polygon, other_polygon)
+    return intersection_polygon.get_area() / union_polygon.get_area()
 
 
 def overlap_point_ellipse(point, ellipse):
