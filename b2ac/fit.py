@@ -21,9 +21,9 @@ from __future__ import absolute_import
 import numpy as np
 
 import b2ac.matrix.matrix_operations as mo
-import b2ac.matrix.matrix_algorithms as ma
 import b2ac.eigenmethods.qr_algorithm as qr
 import b2ac.eigenmethods.inverse_iteration as inv_iter
+import b2ac.conversion as c2gconv
 
 DEBUG = True
 
@@ -85,6 +85,8 @@ def fit_improved_B2AC_numpy(points):
     :rtype: :py:class:`numpy.ndarray`
 
     """
+    points = np.array(points, 'float')
+    points, x_mean, y_mean = _remove_mean_values(points)
 
     x = points[:, 0]
     y = points[:, 1]
@@ -95,13 +97,22 @@ def fit_improved_B2AC_numpy(points):
     S3 = D2.T.dot(D2)
     T = -np.linalg.inv(S3).dot(S2.T)
     M = S1 + S2.dot(T)
-    M = np.array([M[2, :] / 2, -M[1, :], M[0, :] / 2])
-    # M = M.dot(np.inv(np.array([[0,0,2], [0,-1,0], [2,0,0]])))
+    #M2 = np.array([M[2, :] / 2, -M[1, :], M[0, :] / 2])
+    inv_mat = np.array([[0, 0, 0.5], [0, -1, 0], [0.5, 0, 0]], 'float')
+    M = inv_mat.dot(M)
     eigenvalues, eigenvectors = np.linalg.eig(M)
     cond = (4 * eigenvectors[:, 0] * eigenvectors[:, 2]) - (eigenvectors[:, 1] ** 2)
     I = np.where(cond > 0)[0]
-    a1 = eigenvectors[:, I[np.argmin(cond[I])]]
-    return _general_to_rotated(np.concatenate([a1, T.dot(a1)]))
+    ev_ind = I[np.argmin(cond[I])]
+    a1 = eigenvectors[:, ev_ind]
+    if DEBUG:
+        print("Numpy Version, Elliptical solution = {0}: {1}".format(eigenvalues[ev_ind], a1))
+
+    conic_coefficients = np.concatenate((a1, np.dot(T, a1)))
+    rotated_euclidian_coefficients = list(c2gconv.conic_to_general_1(conic_coefficients))
+    rotated_euclidian_coefficients[0] = (rotated_euclidian_coefficients[0][0] + x_mean,
+                                         rotated_euclidian_coefficients[0][1] + y_mean)
+    return rotated_euclidian_coefficients
 
 
 def fit_improved_B2AC_double(points):
@@ -119,6 +130,7 @@ def fit_improved_B2AC_double(points):
 
     """
     e_conds = []
+    points = np.array(points, 'float')
     points, x_mean, y_mean = _remove_mean_values(points)
 
     M, T = _calculate_M_and_T_double(points)
@@ -143,10 +155,10 @@ def fit_improved_B2AC_double(points):
         raise ArithmeticError("No elliptical solution found.")
 
     if DEBUG:
-        print("Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
+        print("Double precision, Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
 
     conic_coefficients = np.concatenate((a, np.dot(T, a)))
-    rotated_euclidian_coefficients = list(_general_to_rotated(conic_coefficients))
+    rotated_euclidian_coefficients = list(c2gconv.conic_to_general_1(conic_coefficients))
     rotated_euclidian_coefficients[0] = (rotated_euclidian_coefficients[0][0] + x_mean,
                                          rotated_euclidian_coefficients[0][1] + y_mean)
     return rotated_euclidian_coefficients
@@ -187,223 +199,13 @@ def fit_improved_B2AC_int(points):
         raise ArithmeticError("No elliptical solution found.")
 
     if DEBUG:
-        print("Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
+        print("Integer precision, Elliptical solution = {0}: {1}".format(e_vals[ev_ind], a))
 
     conic_coefficients = np.concatenate((a, np.dot(T_no_det, a) // determinant_S3))
-    rotated_euclidian_coefficients = list(_general_to_rotated_int(conic_coefficients, True))
+    rotated_euclidian_coefficients = list(c2gconv.conic_to_general_int(conic_coefficients, True))
     rotated_euclidian_coefficients[0] = (rotated_euclidian_coefficients[0][0] + x_mean,
                                          rotated_euclidian_coefficients[0][1] + y_mean)
     return rotated_euclidian_coefficients
-
-
-def _general_to_rotated(conic_coeffs):
-    """Transform from conic section format to general format.
-
-    :param conic_coeffs: The six coefficients defining the ellipse as a conic shape in
-     :math:`ax^2 + bxy + cy^2 + dx + ey + f = 0`.
-    :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
-    :return: The general form for the ellipse. Returns tuple :math:`(x_c,\ y_c),\\ (a,\\ b),\\ \\theta`
-        that fulfills the equation
-
-        .. math::
-
-            \\frac{((x-x_c)\\cos(\\theta) + (y-y_c)\\sin(\\theta))^2}{a^2} +
-            \\frac{((x-x_c)\\sin(\\theta) - (y-y_c)\\sin(\\theta))^2}{b^2} = 1
-
-    :rtype: tuple
-
-    """
-    a, b, c, d, e, f = conic_coeffs
-
-    angle = np.arctan2(b, a - c) / 2
-
-    # Obtaining angels using Givens rotations.
-    # cos_2t, sin_2t = ma.Givens_rotation_double(b, a-c)
-    # cos_2t, sin_2t = -sin_2t, cos_2t
-    #
-    # if cos_2t < 0:
-    #     sin_t = np.sqrt((1 - cos_2t)/2)
-    #     cos_t = sin_2t / (2 * sin_t)
-    # else:
-    #     cos_t = np.sqrt((cos_2t + 1)/2)
-    #     sin_t = sin_2t / (2 * cos_t)
-    cos_t = np.cos(angle)
-    sin_t = np.sin(angle)
-
-    a_prime = a * (cos_t ** 2) + b * cos_t * sin_t + c * (sin_t ** 2)
-    c_prime = a * (sin_t ** 2) - b * cos_t * sin_t + c * (cos_t ** 2)
-    d_prime = (d * cos_t) + (e * sin_t)
-    e_prime = (-(d * sin_t)) + (e * cos_t)
-    f_prime = f
-
-    x_prime = (-d_prime) / (2 * a_prime)
-    y_prime = (-e_prime) / (2 * c_prime)
-    x = (x_prime * cos_t) - (y_prime * sin_t)
-    y = (x_prime * sin_t) + (y_prime * cos_t)
-
-    maj_axis = np.sqrt(((-4 * f_prime * a_prime * c_prime) +
-                        (c_prime * (d_prime ** 2)) +
-                        (a_prime * (e_prime ** 2))) / (4 * a_prime * (c_prime ** 2)))
-    min_axis = np.sqrt(((-4 * f_prime * a_prime * c_prime) +
-                        (c_prime * (d_prime ** 2)) +
-                        (a_prime * (e_prime ** 2))) / (4 * (a_prime ** 2) * c_prime))
-    if np.isnan(maj_axis):
-        maj_axis = 0.0
-    if np.isnan(min_axis):
-        min_axis = 0.0
-
-    if a_prime > c_prime:
-        x_axis = min_axis
-        y_axis = maj_axis
-    else:
-        x_axis = maj_axis
-        y_axis = min_axis
-
-    general_coeffs = (x, y), (x_axis, y_axis), angle
-
-    if DEBUG:
-        print("Cos: {0}, Sin: {1}".format(cos_t, sin_t))
-        print("Conic form    = {0:.4f}x^2 + {1:.4f}xy + "
-              "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(*conic_coeffs))
-        print("Conic form 2  = {0:.4f}x^2 + {1:.4f}xy + "
-              "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(a_prime, 0, c_prime,
-                                                                  d_prime, e_prime, f_prime))
-        print("Elliptical form: Center = {0}, Radii = {1}, Angle = {2}\n".format(*general_coeffs))
-
-    return general_coeffs
-
-
-def _general_to_rotated_int(conic_coeffs, return_float=False):
-    """Transform from conic section format to general format, in integer precision.
-
-    :param conic_coeffs: The six coefficients defining the ellipse as a conic shape in
-     :math:`ax^2 + bxy + cy^2 + dx + ey + f = 0`.
-    :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
-    :return: The general form for the ellipse. Returns tuple :math:`(x_c,\ y_c),\\ (a,\\ b),\\ \\theta`
-        that fulfills the equation
-
-        .. math::
-
-            \\frac{((x-x_c)\\cos(\\theta) + (y-y_c)\\sin(\\theta))^2}{a^2} +
-            \\frac{((x-x_c)\\sin(\\theta) - (y-y_c)\\sin(\\theta))^2}{b^2} = 1
-
-    :rtype: tuple
-
-    """
-    # These conic coefficients have a scaling e_norm = sqrt(a**2 + b**2 + c**2) from
-    # the eigenvector not being normalized before turning it into conic coefficients.
-    a, b, c, d, e, f = conic_coeffs
-    angle = np.arctan2(b, (a - c)) / 2
-
-    if b == 0:
-        if (a-c) < 0:
-            unity = 1
-            cos_t = 0
-            sin_t = 1
-        else:
-            unity = 1
-            cos_t = 1
-            sin_t = 0
-    elif (a-c) == 0:
-        if b < 0:
-            unity = 50
-            cos_t = 5
-            sin_t = -5
-        else:
-            unity = 50
-            cos_t = 5
-            sin_t = 5
-    else:
-        # unity here becomes a value with scaling e_norm.
-        cos_2t, sin_2t, unity = ma.Givens_rotation_int(b, (a-c))
-
-        cos_2t, sin_2t = -sin_2t, cos_2t
-
-        if cos_2t < 0:
-            sin_t = ma.sqrt_int64(int((unity - cos_2t) >> 1), False)  # sin_t is scaled up sqrt(unity)
-            cos_t = sin_2t // (2 * sin_t)                       # cos_t also becomes sqrt(unity) scaled
-            # Now that we have cos and sin values we establish a new scaling with
-            # unity value obtained through the sin^2(x) + cos^2(x) = 1 trigonometric identity.
-            unity = sin_t ** 2 + cos_t ** 2
-
-        else:
-            cos_t = ma.sqrt_int64(int((cos_2t + unity) >> 1), False)  # cos_t is scaled up sqrt(unity)
-            sin_t = sin_2t // (2 * cos_t)                       # sin_t also becomes sqrt(unity) scaled
-            # Now that we have cos and sin values we establish a new scaling with
-            # unity value obtained through the sin^2(x) + cos^2(x) = 1 trigonometric identity.
-            unity = sin_t ** 2 + cos_t ** 2
-
-    a_prime = a * (cos_t ** 2) + b * cos_t * sin_t + c * (sin_t ** 2)  # Is unity + e_norm scaled
-    c_prime = a * (sin_t ** 2) - b * cos_t * sin_t + c * (cos_t ** 2)  # Is unity + e_norm scaled
-    d_prime = (d * cos_t) + (e * sin_t)  # Is sqrt(unity) + e_norm scaled
-    e_prime = (-(d * sin_t)) + (e * cos_t)  # Is sqrt(unity) + e_norm scaled
-    f_prime = f  # Is e_norm scaled only.
-
-    x_prime_num = (-d_prime)
-    x_prime_denom = (2 * a_prime)
-
-    y_prime_num = (-e_prime)
-    y_prime_denom = (2 * c_prime)
-
-    if return_float:
-        # At sub-pixel precision, treat values as floats.
-        x = (((x_prime_num * cos_t) / x_prime_denom) - ((y_prime_num * sin_t) / y_prime_denom))
-        y = (((x_prime_num * sin_t) / x_prime_denom) + ((y_prime_num * cos_t) / y_prime_denom))
-    else:
-        # At pixel precision, perform integer division.
-        x = int(((x_prime_num * cos_t) // x_prime_denom) -
-                ((y_prime_num * sin_t) // y_prime_denom))
-        y = int(((x_prime_num * sin_t) // x_prime_denom) +
-                ((y_prime_num * cos_t) // y_prime_denom))
-
-    sqrt_unity = ma.sqrt_int64(int(unity))
-
-    a_prime //= unity
-    c_prime //= unity
-    d_prime //= sqrt_unity
-    e_prime //= sqrt_unity
-
-    if return_float:
-        # At sub-pixel precision, use float divison and square root.
-        numerator = ((-4 * f_prime * a_prime * c_prime) +
-                     (c_prime * (d_prime ** 2)) +
-                     (a_prime * (e_prime ** 2)))
-        denominator_major = (4 * a_prime * (c_prime ** 2))
-        tmp_axis = ma.sqrt_int64((numerator // denominator_major), True)
-        maj_axis = tmp_axis[0] + tmp_axis[1]
-        denominator_minor = (4 * (a_prime ** 2) * c_prime)
-        tmp_axis = ma.sqrt_int64(numerator // denominator_minor, True)
-        min_axis = tmp_axis[0] + tmp_axis[1]
-    else:
-        # At pixel precision, use integer division and perform
-        # fixed point square root.
-        numerator = ((-4 * f_prime * a_prime * c_prime) +
-                     (c_prime * (d_prime ** 2)) +
-                     (a_prime * (e_prime ** 2))) * unity
-        denominator_major = (4 * a_prime * (c_prime ** 2))
-        maj_axis = ma.sqrt_int64(int(numerator // denominator_major))
-        denominator_minor = (4 * (a_prime ** 2) * c_prime)
-        min_axis = ma.sqrt_int64(int(numerator // denominator_minor))
-
-    if a_prime > c_prime:
-        x_axis = min_axis
-        y_axis = maj_axis
-    else:
-        x_axis = maj_axis
-        y_axis = min_axis
-
-    general_coeffs = (x, y), (x_axis, y_axis), angle
-
-    if DEBUG:
-        print("Cos: {0} => {1}, Sin: {2} => {3}".format(cos_t, cos_t / np.sqrt(unity), sin_t, sin_t / np.sqrt(unity)))
-        print("Conic form    = {0:.4f}x^2 + {1:.4f}xy + "
-              "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(*conic_coeffs))
-        print("Conic form 2  = {0:.4f}x^2 + {1:.4f}xy + "
-              "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(
-              a_prime * unity, 0, c_prime * unity, d_prime * np.sqrt(unity), e_prime * np.sqrt(unity), f_prime))
-        print("Elliptical form: Center = {0}, Radii = {1}, Angle = {2}\n".format(*general_coeffs))
-
-    return general_coeffs
 
 
 def _remove_mean_values(points):
@@ -423,13 +225,14 @@ def _calculate_M_and_T_double(points):
 
     """
     S = _calculate_scatter_matrix_py(points[:, 0], points[:, 1])
+    S1 = S[:3, :3]
     S3 = np.array([S[3, 3], S[3, 4], S[3, 5], S[4, 4], S[4, 5], S[5, 5]])
     S3_inv = mo.inverse_symmetric_3by3_double(S3).reshape((3, 3))
     S2 = S[:3, 3:]
     T = -np.dot(S3_inv, S2.T)
     M_term_2 = np.dot(S2, T)
-    M = S[:3, :3] + M_term_2
-    M[[0, 2], :] /= 2
+    M = S1 + M_term_2
+    M[[0, 2], :] = M[[2, 0], :] / 2
     M[1, :] = -M[1, :]
 
     return M, T
