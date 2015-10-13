@@ -201,7 +201,7 @@ def inverse_3by3_double(M):
     determinant += M[1] * adj_M[3]  # Using addition since minus is integrated in adjunct matrix.
     determinant += M[2] * adj_M[6]
 
-    return (adj_M / determinant)
+    return adj_M / determinant
 
 
 def add_symmetric_matrix(M, M_sym):

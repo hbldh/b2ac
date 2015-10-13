@@ -23,10 +23,8 @@ import numpy as np
 
 import b2ac.matrix.matrix_algorithms as ma
 
-DEBUG = True
 
-
-def conic_to_general_1(conic_coeffs):
+def conic_to_general_1(conic_coeffs, verbose=False):
     """Transform from conic section format to general format.
 
     Adopted from http://math.stackexchange.com/a/423272
@@ -93,7 +91,7 @@ def conic_to_general_1(conic_coeffs):
 
     general_coeffs = (x, y), (x_axis, y_axis), angle
 
-    if DEBUG:
+    if verbose:
         print("Cos: {0}, Sin: {1}".format(cos_t, sin_t))
         print("Conic form    = {0:.4f}x^2 + {1:.4f}xy + "
               "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(*conic_coeffs))
@@ -105,7 +103,7 @@ def conic_to_general_1(conic_coeffs):
     return general_coeffs
 
 
-def conic_to_general_2(conic_coeffs):
+def conic_to_general_2(conic_coeffs, verbose=False):
     """
 
     :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
@@ -135,7 +133,7 @@ def conic_to_general_2(conic_coeffs):
     return (x, y), (maj_axis, min_axis), angle
 
 
-def conic_to_general_3(conic_coeffs):
+def conic_to_general_3(conic_coeffs, verbose=False):
         a, b, c, d, e, f = conic_coeffs
 
         angle = np.arctan2(b, a - c) / 2
@@ -163,7 +161,7 @@ def conic_to_general_3(conic_coeffs):
         return (x, y), (a_squared, b_squared), angle
 
 
-def conic_to_general_int(conic_coeffs, return_float=False):
+def conic_to_general_int(conic_coeffs, return_float=False, verbose=False):
     """Transform from conic section format to general format, in integer precision.
 
     :param conic_coeffs: The six coefficients defining the ellipse as a conic shape in
@@ -284,13 +282,13 @@ def conic_to_general_int(conic_coeffs, return_float=False):
 
     general_coeffs = (x, y), (x_axis, y_axis), angle
 
-    if DEBUG:
+    if verbose:
         print("Cos: {0} => {1}, Sin: {2} => {3}".format(cos_t, cos_t / np.sqrt(unity), sin_t, sin_t / np.sqrt(unity)))
         print("Conic form    = {0:.4f}x^2 + {1:.4f}xy + "
               "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(*conic_coeffs))
         print("Conic form 2  = {0:.4f}x^2 + {1:.4f}xy + "
               "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(
-              a_prime * unity, 0, c_prime * unity, d_prime * np.sqrt(unity), e_prime * np.sqrt(unity), f_prime))
+            a_prime * unity, 0, c_prime * unity, d_prime * np.sqrt(unity), e_prime * np.sqrt(unity), f_prime))
         print("Elliptical form: Center = {0}, Radii = {1}, Angle = {2}\n".format(*general_coeffs))
 
     return general_coeffs

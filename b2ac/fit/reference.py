@@ -47,6 +47,55 @@ def fit_B2AC(points):
     return evect[:, ind]
 
 
+def fit_improved_B2AC_numpy(points):
+    """Ellipse fitting in Python with improved B2AC algorithm as described in
+    this `paper <http://autotrace.sourceforge.net/WSCG98.pdf>`_.
+
+    This version of the fitting simply applies NumPy:s methods for calculating
+    the conic section, modelled after the Matlab code in the paper:
+
+    .. code-block::
+
+        function a = fit_ellipse(x, y)
+
+        D1 = [x .ˆ 2, x .* y, y .ˆ 2]; % quadratic part of the design matrix
+        D2 = [x, y, ones(size(x))]; % linear part of the design matrix
+        S1 = D1’ * D1; % quadratic part of the scatter matrix
+        S2 = D1’ * D2; % combined part of the scatter matrix
+        S3 = D2’ * D2; % linear part of the scatter matrix
+        T = - inv(S3) * S2’; % for getting a2 from a1
+        M = S1 + S2 * T; % reduced scatter matrix
+        M = [M(3, :) ./ 2; - M(2, :); M(1, :) ./ 2]; % premultiply by inv(C1)
+        [evec, eval] = eig(M); % solve eigensystem
+        cond = 4 * evec(1, :) .* evec(3, :) - evec(2, :) .ˆ 2; % evaluate a’Ca
+        a1 = evec(:, find(cond > 0)); % eigenvector for min. pos. eigenvalue
+        a = [a1; T * a1]; % ellipse coefficients
+
+    :param points: The [Nx2] array of points to fit ellipse to.
+    :type points: :py:class:`numpy.ndarray`
+    :return: The conic section array defining the fitted ellipse.
+    :rtype: :py:class:`numpy.ndarray`
+
+    """
+
+    x = points[:, 0]
+    y = points[:, 1]
+    D1 = np.vstack([x ** 2, x * y, y ** 2]).T
+    D2 = np.vstack([x, y, np.ones((len(x), ), dtype=x.dtype)]).T
+    S1 = D1.T.dot(D1)
+    S2 = D1.T.dot(D2)
+    S3 = D2.T.dot(D2)
+    T = -np.linalg.inv(S3).dot(S2.T)
+    M = S1 + S2.dot(T)
+    M = np.array([M[2, :] / 2, -M[1, :], M[0, :] / 2])
+    # M = M.dot(np.inv(np.array([[0,0,2], [0,-1,0], [2,0,0]])))
+    eigenvalues, eigenvectors = np.linalg.eig(M)
+    cond = (4 * eigenvectors[:, 0] * eigenvectors[:, 2]) - (eigenvectors[:, 1] ** 2)
+    I = np.where(cond > 0)[0]
+    eigenvector = eigenvectors[:, I[np.argmin(cond[I])]]
+    return np.concatenate([eigenvector, T.dot(eigenvector)])
+
+
 def fit_improved_B2AC(points):
     """Ellipse fitting in Python with improved B2AC algorithm as described in
     this `paper <http://autotrace.sourceforge.net/WSCG98.pdf>`_.
@@ -72,9 +121,6 @@ def fit_improved_B2AC(points):
     M = inv_mat.dot(M)
 
     e_vals, e_vect = np.linalg.eig(M)
-
-    #print("Eigenvalues: " + ", ".join([str(e) for e in e_vals]))
-    #print("Eigenvectors: " + ", ".join([str(e) for e in e_vect.flatten()]))
 
     try:
         elliptical_solution_index = np.where(((4 * e_vect[0, :] * e_vect[2, :]) - ((e_vect[1, :] ** 2))) > 0)[0][0]
@@ -121,12 +167,6 @@ def fit_improved_B2AC_int(points):
         raise ArithmeticError("No elliptical solution found.")
     a = e_vect[:, elliptical_solution_index]
     return np.concatenate((a, np.dot(T_no_det, a) / det_S3))
-
-
-def _remove_mean_values(points):
-    x_mean = int(points[:, 0].mean())
-    y_mean = int(points[:, 1].mean())
-    return points - (x_mean, y_mean), x_mean, y_mean
 
 
 def _calculate_scatter_matrix_py(x, y):
