@@ -1,1 +1,2 @@
-__author__ = 'Henrik Blidh'
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
