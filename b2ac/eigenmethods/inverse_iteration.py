@@ -43,7 +43,7 @@ def inverse_iteration_for_eigenvector_double(A, eigenvalue, n_iterations=1):
     """
     A = np.array(A, 'float')
     # Subtract the eigenvalue from the diagonal entries of the matrix.
-    # N.B. Also slightly perturb the eigenvalue so the matrix will
+    # N_POLYPOINTS.B. Also slightly perturb the eigenvalue so the matrix will
     # not be so close to singular!
     for k in xrange(A.shape[0]):
         A[k, k] -= eigenvalue + 0.001

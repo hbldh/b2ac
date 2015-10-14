@@ -30,7 +30,7 @@ QR_ALGORITHM_TOLERANCE = 1e-10  #sys.float_info.epsilon
 def QR_algorithm(A):
     """The straight QR algorithm for finding eigenvalues.
 
-    N.B. Has very slow convergence. Use shifted versions instead.
+    N_POLYPOINTS.B. Has very slow convergence. Use shifted versions instead.
 
     .. code-block:: matlab
 

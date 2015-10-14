@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-:mod:`fixed_point` -- 
+:mod:`fixed_point` --
 ======================
 
 .. module:: fixed_point
@@ -53,3 +53,22 @@ def scale_64bit_vector(v):
         scale += 1
 
     return v >> scale, scale
+
+
+def scale_T_matrix(T_no_det, det_S3):
+    m, M = np.abs(T_no_det).min(), np.abs(T_no_det).max()
+    if np.log2(M) <= 32:
+        scale = 0
+    elif np.log2(M) <= 40:
+        scale = 8
+    elif np.log2(M) <= 48:
+        scale = 16
+    elif np.log2(M) <= 56:
+        scale = 24
+    else:
+        scale = 32
+
+    det_S3 >>= scale
+    T_no_det >>= scale
+
+    return T_no_det, det_S3

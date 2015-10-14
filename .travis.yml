@@ -1,0 +1,15 @@
+language: python
+sudo: false
+python:
+  - 2.7
+branches:
+  only:
+    - master
+    - develop
+install:
+  - "pip install coverage"
+  - "pip install -r requirements.txt"
+  - "python setup.py build"
+  - "cp build/lib.linux-x86_64-2.7/b2ac/ext/ellipse_fitter.so b2ac/ext/ellipse_fitter.so"
+script: nosetests tests --with-coverage --cover-package=b2ac
+
