@@ -23,7 +23,8 @@ import numpy as np
 
 from b2ac.eigenmethods.qr_algorithm import QR_algorithm_shift_Givens_int
 from b2ac.eigenmethods.inverse_iteration import inverse_iteration_for_eigenvector_int
-from b2ac.matrix import matrix_operations as mo
+from b2ac.matrix.matrix_operations import inverse_symmetric_3by3_int64, matrix_add_symmetric
+from b2ac.matrix.fixed_point import scale_T_matrix
 
 __all__ = ['fit_improved_B2AC_int']
 
@@ -64,25 +65,6 @@ def fit_improved_B2AC_int(points):
     return conic_coefficients
 
 
-def _scale_T_matrix(T_no_det, det_S3):
-    m, M = np.abs(T_no_det).min(), np.abs(T_no_det).max()
-    if np.log2(M) <= 32:
-        scale = 0
-    elif np.log2(M) <= 40:
-        scale = 8
-    elif np.log2(M) <= 48:
-        scale = 16
-    elif np.log2(M) <= 56:
-        scale = 24
-    else:
-        scale = 32
-
-    det_S3 >>= scale
-    T_no_det >>= scale
-
-    return T_no_det, det_S3
-
-
 def _calculate_M_and_T_int64(points):
     """Part of the B2AC ellipse fitting algorithm, calculating the M and T
      matrices needed.
@@ -104,20 +86,15 @@ def _calculate_M_and_T_int64(points):
     S1 = np.array([S[0, 0], S[0, 1], S[0, 2], S[1, 1], S[1, 2], S[2, 2]], dtype='int64')
     S3 = np.array([S[3, 3], S[3, 4], S[3, 5], S[4, 4], S[4, 5], S[5, 5]], dtype='int64')
 
-    adj_S3, det_S3 = mo.inverse_symmetric_3by3_int64(S3)
-    if np.linalg.norm((np.array(adj_S3, 'float') / det_S3) - np.linalg.norm(np.linalg.inv(S[3:, 3:]))) > 0.1:
-        print("Norm diff: {0}".format(np.linalg.norm(np.array(adj_S3, 'float') / det_S3) - np.linalg.norm(S[3:,3:])))
+    adj_S3, det_S3 = inverse_symmetric_3by3_int64(S3)
     S2 = S[:3, 3:]
 
     T_no_det = - np.dot(np.array(adj_S3.reshape((3, 3)), 'int64'), np.array(S2.T, 'int64'))
-    T_no_det, det_S3 = _scale_T_matrix(T_no_det, det_S3)
+    T_no_det, det_S3 = scale_T_matrix(T_no_det, det_S3)
     M_term_2 = np.dot(np.array(S2, 'int64'), T_no_det) // det_S3
-    M = mo.matrix_add_symmetric(M_term_2, S1)
-    M[[0, 2], :] /= 2
+    M = matrix_add_symmetric(M_term_2, S1)
+    M[[0, 2], :] //= 2
     M[1, :] = -M[1, :]
-
-    #T_no_det, scale = eig._scale_matrix(T_no_det)
-    #det_S3 = det_S3 >> scale
 
     return M, T_no_det, det_S3
 

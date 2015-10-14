@@ -20,7 +20,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import numpy as np
-from b2ac.fit.double import _calculate_scatter_matrix_py
+from b2ac.fit.double import _calculate_scatter_matrix_double
 
 
 def fit_unstable_B2AC(points):
@@ -43,7 +43,7 @@ def fit_unstable_B2AC(points):
     constraint_matrix[1, 1] = -1
     constraint_matrix[2, 0] = 2
 
-    S = _calculate_scatter_matrix_py(points[:, 0], points[:, 1])
+    S = _calculate_scatter_matrix_double(points[:, 0], points[:, 1])
 
     eigenvalues, eigenvalues = scla.eig(S, constraint_matrix)
     ind = np.where(eigenvalues == (eigenvalues[eigenvalues > 0].min()))[0][0]

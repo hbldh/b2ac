@@ -47,7 +47,8 @@ def conic_to_general_1(conic_coeffs, verbose=False):
 
     angle = np.arctan2(b, a - c) / 2
 
-    # Obtaining angels using Givens rotations.
+    # Obtaining angles using Givens rotations.
+    # TODO: Evaluate this method of calculating angles.
     # cos_2t, sin_2t = ma.Givens_rotation_double(b, a-c)
     # cos_2t, sin_2t = -sin_2t, cos_2t
     #
@@ -57,6 +58,7 @@ def conic_to_general_1(conic_coeffs, verbose=False):
     # else:
     #     cos_t = np.sqrt((cos_2t + 1)/2)
     #     sin_t = sin_2t / (2 * cos_t)
+
     cos_t = np.cos(angle)
     sin_t = np.sin(angle)
 
@@ -89,7 +91,7 @@ def conic_to_general_1(conic_coeffs, verbose=False):
         x_axis = maj_axis
         y_axis = min_axis
 
-    general_coeffs = (x, y), (x_axis, y_axis), angle
+    general_coeffs = [x, y], [x_axis, y_axis], angle
 
     if verbose:
         print("Cos: {0}, Sin: {1}".format(cos_t, sin_t))
@@ -104,7 +106,7 @@ def conic_to_general_1(conic_coeffs, verbose=False):
 
 
 def conic_to_general_2(conic_coeffs, verbose=False):
-    """
+    """Transform from conic section format to general format.
 
     :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
     :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
@@ -130,35 +132,45 @@ def conic_to_general_2(conic_coeffs, verbose=False):
     maj_axis = 1 / np.sqrt((mu * a + mu * c - sqrt_expr) / 2)
     angle = np.arctan2(-2 * b, c - a)
 
-    return (x, y), (maj_axis, min_axis), angle
+    return [x, y], [maj_axis, min_axis], angle
 
 
 def conic_to_general_3(conic_coeffs, verbose=False):
-        a, b, c, d, e, f = conic_coeffs
+    """Transform from conic section format to general format.
 
-        angle = np.arctan2(b, a - c) / 2
-        if a > c:
-            angle += np.pi / 2
-        cos_theta = np.cos(angle) # np.sqrt((1 + np.cos(2*angle)) / 2)
-        sin_theta = np.sin(angle) # np.sqrt((1 - np.cos(2*angle)) / 2)
+    :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
+    :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
+    :param verbose: If debug printout is desired.
+    :type verbose: bool
+    :return:
+    :rtype: tuple
 
-        a_prim = a * (cos_theta ** 2) + (b * cos_theta * sin_theta) + c * (sin_theta ** 2)
-        c_prim = a * (sin_theta ** 2) - (b * cos_theta * sin_theta) + c * (cos_theta ** 2)
-        d_prim = d * cos_theta + e * sin_theta
-        e_prim = -(d * sin_theta) + e * cos_theta
-        f_prim = f
+    """
+    a, b, c, d, e, f = conic_coeffs
 
-        x_prim = (-d_prim) / (2 * a_prim)
-        y_prim = (-e_prim) / (2 * c_prim)
-        a_squared = (((-4 * f_prim * a_prim * c_prim) + (c_prim * (d_prim ** 2)) + (a_prim * (e_prim ** 2))) /
-                     (4 * a_prim * (c_prim ** 2)))
-        b_squared = (((-4 * f_prim * a_prim * c_prim) + (c_prim * (d_prim ** 2)) + (a_prim * (e_prim ** 2))) /
-                     (4 * (a_prim ** 2) * c_prim))
+    angle = np.arctan2(b, a - c) / 2
+    if a > c:
+        angle += np.pi / 2
+    cos_theta = np.cos(angle) # np.sqrt((1 + np.cos(2*angle)) / 2)
+    sin_theta = np.sin(angle) # np.sqrt((1 - np.cos(2*angle)) / 2)
 
-        x = x_prim * cos_theta - y_prim * sin_theta
-        y = x_prim * sin_theta + y_prim * cos_theta
+    a_prim = a * (cos_theta ** 2) + (b * cos_theta * sin_theta) + c * (sin_theta ** 2)
+    c_prim = a * (sin_theta ** 2) - (b * cos_theta * sin_theta) + c * (cos_theta ** 2)
+    d_prim = d * cos_theta + e * sin_theta
+    e_prim = -(d * sin_theta) + e * cos_theta
+    f_prim = f
 
-        return (x, y), (a_squared, b_squared), angle
+    x_prim = (-d_prim) / (2 * a_prim)
+    y_prim = (-e_prim) / (2 * c_prim)
+    a_squared = (((-4 * f_prim * a_prim * c_prim) + (c_prim * (d_prim ** 2)) + (a_prim * (e_prim ** 2))) /
+                 (4 * a_prim * (c_prim ** 2)))
+    b_squared = (((-4 * f_prim * a_prim * c_prim) + (c_prim * (d_prim ** 2)) + (a_prim * (e_prim ** 2))) /
+                 (4 * (a_prim ** 2) * c_prim))
+
+    x = x_prim * cos_theta - y_prim * sin_theta
+    y = x_prim * sin_theta + y_prim * cos_theta
+
+    return [x, y], [a_squared, b_squared], angle
 
 
 def conic_to_general_int(conic_coeffs, return_float=False, verbose=False):
@@ -280,7 +292,7 @@ def conic_to_general_int(conic_coeffs, return_float=False, verbose=False):
         x_axis = maj_axis
         y_axis = min_axis
 
-    general_coeffs = (x, y), (x_axis, y_axis), angle
+    general_coeffs = [x, y], [x_axis, y_axis], angle
 
     if verbose:
         print("Cos: {0} => {1}, Sin: {2} => {3}".format(cos_t, cos_t / np.sqrt(unity), sin_t, sin_t / np.sqrt(unity)))

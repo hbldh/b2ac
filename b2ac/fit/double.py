@@ -77,7 +77,7 @@ def _calculate_M_and_T_double(points):
     :rtype: tuple
 
     """
-    S = _calculate_scatter_matrix_py(points[:, 0], points[:, 1])
+    S = _calculate_scatter_matrix_double(points[:, 0], points[:, 1])
     S1 = S[:3, :3]
     S3 = np.array([S[3, 3], S[3, 4], S[3, 5], S[4, 4], S[4, 5], S[5, 5]])
     S3_inv = mo.inverse_symmetric_3by3_double(S3).reshape((3, 3))
@@ -91,7 +91,7 @@ def _calculate_M_and_T_double(points):
     return M, T
 
 
-def _calculate_scatter_matrix_py(x, y):
+def _calculate_scatter_matrix_double(x, y):
     """Calculates the complete scatter matrix for the input coordinates.
 
     :param x: The x coordinates.
@@ -109,6 +109,6 @@ def _calculate_scatter_matrix_py(x, y):
     D[:, 3] = x
     D[:, 4] = y
 
-    return np.dot(D.T, D)
+    return D.T.dot(D)
 
 

@@ -77,9 +77,9 @@ def fit_improved_B2AC_numpy(points):
     :rtype: :py:class:`numpy.ndarray`
 
     """
-
     x = points[:, 0]
     y = points[:, 1]
+
     D1 = np.vstack([x ** 2, x * y, y ** 2]).T
     D2 = np.vstack([x, y, np.ones((len(x), ), dtype=x.dtype)]).T
     S1 = D1.T.dot(D1)
@@ -88,12 +88,11 @@ def fit_improved_B2AC_numpy(points):
     T = -np.linalg.inv(S3).dot(S2.T)
     M = S1 + S2.dot(T)
     M = np.array([M[2, :] / 2, -M[1, :], M[0, :] / 2])
-    # M = M.dot(np.inv(np.array([[0,0,2], [0,-1,0], [2,0,0]])))
-    eigenvalues, eigenvectors = np.linalg.eig(M)
-    cond = (4 * eigenvectors[:, 0] * eigenvectors[:, 2]) - (eigenvectors[:, 1] ** 2)
+    eval, evec = np.linalg.eig(M)
+    cond = (4 * evec[:, 0] * evec[:, 2]) - (evec[:, 1] ** 2)
     I = np.where(cond > 0)[0]
-    eigenvector = eigenvectors[:, I[np.argmin(cond[I])]]
-    return np.concatenate([eigenvector, T.dot(eigenvector)])
+    a1 = evec[:, I[np.argmin(cond[I])]]
+    return np.concatenate([a1, T.dot(a1)])
 
 
 def fit_improved_B2AC(points):
