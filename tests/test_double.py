@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-:mod:`test_ellipse_fit_reference`
+:mod:`test_double`
 ==================
 
-.. module:: test_ellipse_fit_reference
+.. module:: test_double
     :platform: Unix, Windows
     :synopsis:
 

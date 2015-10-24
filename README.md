@@ -119,3 +119,4 @@ and the possibility of overflow is increased. Subsampling of points is recommend
 
 3.  Golub, G.H. & Van Loan, C.F., 2012. Matrix Computations (4th Ed.). 
     Johns Hopkins University Press, Baltimore, MD, USA.
+
