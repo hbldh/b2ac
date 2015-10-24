@@ -32,9 +32,6 @@ from b2ac.geometry.ellipse import B2ACEllipse
 from b2ac.geometry.overlap.overlap_functions import overlap
 
 
-# Bengt Sändh FInn Zetterholm
-
-
 class TestExtensions(object):
 
     def setup(self):
