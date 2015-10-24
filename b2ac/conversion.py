@@ -24,7 +24,49 @@ import numpy as np
 import b2ac.matrix.matrix_algorithms as ma
 
 
-def conic_to_general_1(conic_coeffs, verbose=False):
+def conic_to_general_reference(conic_coeffs):
+    """Transform from conic section format to general format.
+
+    :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
+    :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
+    :param verbose: If debug printout is desired.
+    :type verbose: bool
+    :return:
+    :rtype: tuple
+
+    """
+    a, b, c, d, e, f = conic_coeffs
+
+    angle = np.arctan2(b, a - c) / 2
+
+    cos_theta = np.cos(angle)  # np.sqrt((1 + np.cos(2*angle)) / 2)
+    sin_theta = np.sin(angle)  # np.sqrt((1 - np.cos(2*angle)) / 2)
+
+    a_prime = a * (cos_theta ** 2) + (b * cos_theta * sin_theta) + c * (sin_theta ** 2)
+    c_prime = a * (sin_theta ** 2) - (b * cos_theta * sin_theta) + c * (cos_theta ** 2)
+    d_prime = (d * cos_theta) + (e * sin_theta)
+    e_prime = (-(d * sin_theta)) + (e * cos_theta)
+    f_prime = f
+
+    x_prime = (-d_prime) / (2 * a_prime)
+    y_prime = (-e_prime) / (2 * c_prime)
+    major_axis = np.sqrt(
+        ((-4 * f_prime * a_prime * c_prime) + (c_prime * (d_prime ** 2)) + (a_prime * (e_prime ** 2))) /
+        (4 * a_prime * (c_prime ** 2)))
+    minor_axis = np.sqrt(
+        ((-4 * f_prime * a_prime * c_prime) + (c_prime * (d_prime ** 2)) + (a_prime * (e_prime ** 2))) /
+        (4 * (a_prime ** 2) * c_prime))
+
+    if a_prime > c_prime:
+        angle += np.pi / 2
+
+    x = x_prime * cos_theta - y_prime * sin_theta
+    y = x_prime * sin_theta + y_prime * cos_theta
+
+    return [x, y], [major_axis, minor_axis], angle
+
+
+def conic_to_general_1(conic_coeffs):
     """Transform from conic section format to general format.
 
     Adopted from http://math.stackexchange.com/a/423272
@@ -93,19 +135,10 @@ def conic_to_general_1(conic_coeffs, verbose=False):
 
     general_coeffs = [x, y], [x_axis, y_axis], angle
 
-    if verbose:
-        print("Cos: {0}, Sin: {1}".format(cos_t, sin_t))
-        print("Conic form    = {0:.4f}x^2 + {1:.4f}xy + "
-              "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(*conic_coeffs))
-        print("Conic form 2  = {0:.4f}x^2 + {1:.4f}xy + "
-              "{2:.4f}y^2 + {3:.4f}x + {4:.4f}y + {5:.4f}".format(a_prime, 0, c_prime,
-                                                                  d_prime, e_prime, f_prime))
-        print("Elliptical form: Center = {0}, Radii = {1}, Angle = {2}\n".format(*general_coeffs))
-
     return general_coeffs
 
 
-def conic_to_general_2(conic_coeffs, verbose=False):
+def conic_to_general_2(conic_coeffs):
     """Transform from conic section format to general format.
 
     :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
@@ -133,44 +166,6 @@ def conic_to_general_2(conic_coeffs, verbose=False):
     angle = np.arctan2(-2 * b, c - a)
 
     return [x, y], [maj_axis, min_axis], angle
-
-
-def conic_to_general_3(conic_coeffs, verbose=False):
-    """Transform from conic section format to general format.
-
-    :param conic_coeffs: The six coefficients defining the ellipse as a conic shape.
-    :type conic_coeffs: :py:class:`numpy.ndarray` or tuple
-    :param verbose: If debug printout is desired.
-    :type verbose: bool
-    :return:
-    :rtype: tuple
-
-    """
-    a, b, c, d, e, f = conic_coeffs
-
-    angle = np.arctan2(b, a - c) / 2
-    if a > c:
-        angle += np.pi / 2
-    cos_theta = np.cos(angle) # np.sqrt((1 + np.cos(2*angle)) / 2)
-    sin_theta = np.sin(angle) # np.sqrt((1 - np.cos(2*angle)) / 2)
-
-    a_prim = a * (cos_theta ** 2) + (b * cos_theta * sin_theta) + c * (sin_theta ** 2)
-    c_prim = a * (sin_theta ** 2) - (b * cos_theta * sin_theta) + c * (cos_theta ** 2)
-    d_prim = d * cos_theta + e * sin_theta
-    e_prim = -(d * sin_theta) + e * cos_theta
-    f_prim = f
-
-    x_prim = (-d_prim) / (2 * a_prim)
-    y_prim = (-e_prim) / (2 * c_prim)
-    a_squared = (((-4 * f_prim * a_prim * c_prim) + (c_prim * (d_prim ** 2)) + (a_prim * (e_prim ** 2))) /
-                 (4 * a_prim * (c_prim ** 2)))
-    b_squared = (((-4 * f_prim * a_prim * c_prim) + (c_prim * (d_prim ** 2)) + (a_prim * (e_prim ** 2))) /
-                 (4 * (a_prim ** 2) * c_prim))
-
-    x = x_prim * cos_theta - y_prim * sin_theta
-    y = x_prim * sin_theta + y_prim * cos_theta
-
-    return [x, y], [a_squared, b_squared], angle
 
 
 def conic_to_general_int(conic_coeffs, return_float=False, verbose=False):
