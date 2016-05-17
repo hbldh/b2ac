@@ -17,6 +17,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import numpy as np
+
+from b2ac.compat import *
 from b2ac.matrix.matrix_ref import inverse_symmetric_3by3_double, inverse_symmetric_3by3_int, add_symmetric_matrix
 
 

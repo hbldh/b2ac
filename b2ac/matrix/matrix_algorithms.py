@@ -18,6 +18,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
+
 
 def QR_factorisation_Householder_double(A):
     """Perform QR factorisation in double floating-point precision.

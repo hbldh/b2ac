@@ -19,6 +19,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+from b2ac.compat import *
 #from b2ac.geometry.overlap.overlap_functions import overlap
 #from b2ac.geometry.distance.distance_functions import distance
 

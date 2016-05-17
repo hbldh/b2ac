@@ -21,6 +21,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
 from b2ac.eigenmethods.qr_algorithm import QR_algorithm_shift_Givens_int
 from b2ac.eigenmethods.inverse_iteration import inverse_iteration_for_eigenvector_int
 from b2ac.matrix.matrix_operations import inverse_symmetric_3by3_int64, matrix_add_symmetric

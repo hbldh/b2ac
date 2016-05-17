@@ -18,6 +18,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
 from b2ac.geometry.shape import B2ACGeometricShape
 
 

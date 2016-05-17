@@ -51,16 +51,16 @@ conic_int = b2ac.fit.fit_improved_B2AC_int(points)
 
 # Convert from conic coefficient form to general ellipse form.
 general_form_numpy = b2ac.conversion.conic_to_general_1(conic_numpy)
-general_form_numpy[0][0] + x_mean
-general_form_numpy[0][1] + y_mean
+general_form_numpy[0][0] += x_mean
+general_form_numpy[0][1] += y_mean
 
 general_form_double = b2ac.conversion.conic_to_general_1(conic_double)
-general_form_double[0][0] + x_mean
-general_form_double[0][1] + y_mean
+general_form_double[0][0] += x_mean
+general_form_double[0][1] += y_mean
 
 general_form_int = b2ac.conversion.conic_to_general_int(conic_int)
-general_form_int[0][0] + x_mean
-general_form_int[0][1] + y_mean
+general_form_int[0][0] += x_mean
+general_form_int[0][1] += y_mean
 
 ```
 
