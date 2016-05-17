@@ -21,6 +21,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
 from b2ac.geometry.point import B2ACPoint
 from b2ac.geometry.ellipse import B2ACEllipse
 from b2ac.geometry.polygon import B2ACPolygon

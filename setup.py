@@ -23,7 +23,7 @@ import numpy
 
 setup(
     name='b2ac',
-    version='0.2.0',
+    version='0.2.1',
     author='Henrik Blidh',
     author_email='henrik.blidh@nedomkull.com',
     description='Python and C implementations of an ellipse fitting algorithm in double and fixed point precision.',

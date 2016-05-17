@@ -18,6 +18,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
+
 
 def inverse_symmetric_3by3_double(M):
     """C style inverse of a symmetric, flattened 3 by 3 matrix.

@@ -20,6 +20,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import numpy as np
+
+from b2ac.compat import *
 from b2ac.fit.double import _calculate_scatter_matrix_double
 
 

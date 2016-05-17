@@ -21,6 +21,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
+
 
 def scale_64bit_matrix(v):
     m, M = np.abs(v).min(), np.abs(v).max()

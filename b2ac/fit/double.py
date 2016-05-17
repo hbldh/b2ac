@@ -20,6 +20,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
 import b2ac.matrix.matrix_operations as mo
 import b2ac.eigenmethods.qr_algorithm as qr
 import b2ac.eigenmethods.inverse_iteration as inv_iter

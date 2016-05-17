@@ -21,6 +21,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from b2ac.compat import *
 import b2ac.matrix.matrix_operations as mo
 import b2ac.matrix.fixed_point as fp
 
