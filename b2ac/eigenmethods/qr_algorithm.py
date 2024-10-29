@@ -283,7 +283,7 @@ def QR_algorithm_Wilkinson_shift(A):
             T = R*Q + muMat;
             tmvec(counter) = abs(T(m,m-1));
             delta = (T(m-1,m-1) - T(m,m)) / 2;
-            mu = T(m,m) - sign(delta) * T(m,m-1) / ...
+            mu = T(m,m) - sign(delta) * T(m,m-1)^2 / ...
                     (abs(delta) + norm([delta T(m,m-1)]));
             if (tmvec(counter) < 1e-8)
                 myeig(m) = T(m,m);
@@ -319,7 +319,7 @@ def QR_algorithm_Wilkinson_shift(A):
         T = np.dot(R, Q) + mu_matrix
         convergence_measure.append(np.abs(T[m, m - 1]))
         delta = (T[m - 1, m - 1] - T[m, m]) / 2
-        mu = T[m, m] - np.sign(delta) * T[m, m - 1] / \
+        mu = T[m, m] - np.sign(delta) * T[m, m - 1]**2 / \
              (np.abs(delta) + np.linalg.norm([delta, T[m, m - 1]]))
 
         if convergence_measure[-1] < QR_ALGORITHM_TOLERANCE:
